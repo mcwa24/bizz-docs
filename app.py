@@ -8,11 +8,43 @@ from document_parser import DocumentParser
 from rag_system import RAGSystem
 from chat_interface import ChatInterface
 
-# Download NLTK data for Streamlit Cloud compatibility
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt', quiet=True)
+# Comprehensive NLTK setup for Streamlit Cloud compatibility
+def setup_nltk():
+    """Setup NLTK data paths and download necessary resources"""
+    try:
+        # Create a writable directory for NLTK data
+        nltk_data_dir = os.path.join(os.getcwd(), 'nltk_data')
+        os.makedirs(nltk_data_dir, exist_ok=True)
+        
+        # Set NLTK data path to our writable directory
+        nltk.data.path.insert(0, nltk_data_dir)
+        
+        # Download essential NLTK resources
+        required_resources = [
+            'tokenizers/punkt',
+            'taggers/averaged_perceptron_tagger',
+            'chunkers/maxent_ne_chunker',
+            'corpora/words',
+            'corpora/stopwords'
+        ]
+        
+        for resource in required_resources:
+            try:
+                nltk.data.find(resource)
+            except LookupError:
+                # Extract package name from resource path
+                package_name = resource.split('/')[-1]
+                nltk.download(package_name, download_dir=nltk_data_dir, quiet=True)
+                st.success(f"Downloaded NLTK resource: {package_name}")
+        
+        # Also set environment variable for NLTK data
+        os.environ['NLTK_DATA'] = nltk_data_dir
+        
+    except Exception as e:
+        st.warning(f"NLTK setup warning: {str(e)}")
+
+# Initialize NLTK setup
+setup_nltk()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

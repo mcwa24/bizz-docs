@@ -67,6 +67,9 @@ tmp/
 # Streamlit
 .streamlit/
 
+# NLTK data
+nltk_data/
+
 # Jupyter
 .ipynb_checkpoints
 
