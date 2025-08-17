@@ -3,9 +3,20 @@ import os
 import tempfile
 from pathlib import Path
 import logging
+import nltk
 from document_parser import DocumentParser
 from rag_system import RAGSystem
 from chat_interface import ChatInterface
+
+# Download NLTK data for Streamlit Cloud compatibility
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab', quiet=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
