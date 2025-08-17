@@ -100,6 +100,8 @@ def main():
         st.session_state.rag_system = None
     if 'chat_history' not in st.session_state:
         st.session_state.chat_history = []
+    if 'openai_api_key' not in st.session_state:
+        st.session_state.openai_api_key = ""
     
     # Sidebar for configuration
     with st.sidebar:
@@ -113,11 +115,37 @@ def main():
             index=0
         )
         
-        # API Key input
+        # API Key input - always show when OpenAI is selected
         if model_type == "OpenAI GPT-4o mini":
-            api_key = st.text_input("OpenAI API Key", type="password", help="Get your API key from OpenAI platform")
-            if api_key:
+            # Check if API key is already in environment or session state
+            current_api_key = os.environ.get("OPENAI_API_KEY", "") or st.session_state.openai_api_key
+            
+            api_key = st.text_input(
+                "OpenAI API Key", 
+                value=current_api_key,
+                type="password", 
+                help="Get your API key from OpenAI platform",
+                placeholder="sk-..." if not current_api_key else "••••••••••••••••"
+            )
+            
+            # Automatically set API key when provided
+            if api_key and api_key != current_api_key:
                 os.environ["OPENAI_API_KEY"] = api_key
+                st.session_state.openai_api_key = api_key
+                st.success("✅ OpenAI API key set successfully!")
+            
+            # Show current status and clear button
+            if current_api_key:
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.info("🔑 API key is configured and ready to use")
+                with col2:
+                    if st.button("🗑️ Clear", key="clear_api_key"):
+                        os.environ.pop("OPENAI_API_KEY", None)
+                        st.session_state.openai_api_key = ""
+                        st.rerun()
+            else:
+                st.warning("⚠️ Please enter your OpenAI API key to continue")
         
         # Embedding model
         st.subheader("Embedding Model")
