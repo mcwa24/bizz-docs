@@ -80,9 +80,32 @@ class ChatInterface:
     def _process_question(self, question: str, analysis_type: str):
         """Process user question and get response from RAG system"""
         try:
+            # Check if RAG system is properly initialized
+            if not self.rag_system:
+                st.error("❌ RAG system is not initialized. Please initialize it first in the Configuration tab.")
+                return
+            
+            # Check if documents are loaded
+            if not hasattr(self.rag_system, 'documents') or not self.rag_system.documents:
+                st.error("❌ No documents are loaded. Please upload and process documents first.")
+                return
+            
             with st.spinner("🤔 AI is thinking..."):
                 # Get response from RAG system
                 response = self.rag_system.query(question, analysis_type)
+                
+                # Check if response contains an error
+                if 'error' in response:
+                    st.error(f"❌ Error from RAG system: {response['error']}")
+                    # Still add to chat history for debugging
+                    chat_entry = {
+                        "timestamp": datetime.now().isoformat(),
+                        "question": question,
+                        "response": response,
+                        "analysis_type": analysis_type
+                    }
+                    st.session_state.chat_history.append(chat_entry)
+                    return
                 
                 # Add to chat history
                 chat_entry = {
@@ -102,6 +125,8 @@ class ChatInterface:
                 
         except Exception as e:
             st.error(f"❌ Error processing question: {str(e)}")
+            # Log the full error for debugging
+            st.exception(e)
     
     def _display_chat_history(self):
         """Display the chat history"""

@@ -35,13 +35,13 @@ def setup_nltk():
                 # Extract package name from resource path
                 package_name = resource.split('/')[-1]
                 nltk.download(package_name, download_dir=nltk_data_dir, quiet=True)
-                st.success(f"Downloaded NLTK resource: {package_name}")
+                print(f"Downloaded NLTK resource: {package_name}")
         
         # Also set environment variable for NLTK data
         os.environ['NLTK_DATA'] = nltk_data_dir
         
     except Exception as e:
-        st.warning(f"NLTK setup warning: {str(e)}")
+        print(f"NLTK setup warning: {str(e)}")
 
 # Initialize NLTK setup
 setup_nltk()
@@ -176,6 +176,19 @@ def main():
                     st.success("RAG system initialized successfully!")
             except Exception as e:
                 st.error(f"Error initializing RAG system: {str(e)}")
+        
+        # System status
+        st.subheader("📊 System Status")
+        if st.session_state.rag_system:
+            st.success("✅ RAG System: Initialized")
+            
+            if st.session_state.documents_loaded:
+                doc_count = st.session_state.rag_system.get_document_count()
+                st.info(f"📚 Documents: {doc_count} loaded")
+            else:
+                st.warning("⚠️ Documents: None loaded")
+        else:
+            st.error("❌ RAG System: Not initialized")
     
     # Main content area
     col1, col2 = st.columns([1, 1])
@@ -196,11 +209,12 @@ def main():
             
             if uploaded_files and st.button("📚 Process Documents"):
                 if not st.session_state.rag_system:
-                    st.error("Please initialize RAG system first!")
+                    st.error("❌ Please initialize RAG system first!")
                 else:
                     try:
                         with st.spinner("Processing documents..."):
                             parser = DocumentParser()
+                            processed_count = 0
                             
                             for uploaded_file in uploaded_files:
                                 # Save uploaded file temporarily
@@ -218,19 +232,29 @@ def main():
                                         uploaded_file.name
                                     )
                                     
+                                    processed_count += 1
                                     st.success(f"✅ Processed: {uploaded_file.name}")
                                     
                                 except Exception as e:
                                     st.error(f"❌ Error processing {uploaded_file.name}: {str(e)}")
+                                    st.exception(e)
                                 finally:
                                     # Clean up temp file
                                     os.unlink(tmp_path)
                             
-                            st.session_state.documents_loaded = True
-                            st.success("🎉 All documents processed successfully!")
+                            if processed_count > 0:
+                                st.session_state.documents_loaded = True
+                                st.success(f"🎉 Successfully processed {processed_count} document(s)!")
+                                
+                                # Verify documents are loaded in RAG system
+                                doc_count = st.session_state.rag_system.get_document_count()
+                                st.info(f"📚 Total documents in RAG system: {doc_count}")
+                            else:
+                                st.error("❌ No documents were processed successfully")
                             
                     except Exception as e:
-                        st.error(f"Error processing documents: {str(e)}")
+                        st.error(f"❌ Error processing documents: {str(e)}")
+                        st.exception(e)
             
             st.markdown('</div>', unsafe_allow_html=True)
         
